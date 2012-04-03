@@ -1,0 +1,31 @@
+# This is a fibonacci implementation in Dave's first virtual machine (DVM01).
+
+# first, init and nop slide for "registers"
+	START
+	NOP
+	NOP
+	NOP
+	NOP
+# register 4 (last NOP) is iteration counter
+	SET 4 10
+
+# init registers 1 and 2 (variables)
+	SET 1 1
+	SET 2 1
+
+# loop begins here (5x nop, 3x set = 5 + 3*3 = position 14)
+	SET 3 @1
+	ADD 3 @2
+	WRITEI @1
+	WRITEC 10
+	SET 1 @2
+	SET 2 @3
+
+# decrease iteration counter
+	SUB 4 1
+
+# jump to beginning of loop if iteration counter not zero, yet
+	JNZ 14 @4
+
+# end program
+	END
