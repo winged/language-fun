@@ -190,6 +190,10 @@
 		}
 	}
 
+	var stdout  = '', outElem = document.getElementById('output');
+	var stdlog  = '', logElem = document.getElementById('log'   );
+
+
 	
 	function getCode() {
 		return document.getElementById('code').value;
@@ -198,18 +202,36 @@
 		return document.getElementById('input').value;
 	}
 	function clearOutput() {
-		document.getElementById('output').textContent = '';
-		document.getElementById('log'   ).textContent = '';
+		stdout = '';
+		stdlog = '';
+		outElem.textContent = '';
+		logElem.textContent = '';
 	}
 	function writeString(str) {
-		var elem = document.getElementById('output');
-		elem.textContent += str;
-		elem.scrollTop = elem.scrollHeight;
+		stdout += str;
+		outElem.textContent = stdout;
+		outElem.scrollTop = outElem.scrollHeight;
 	}
-	function log(str) {
-		var elem = document.getElementById('log');
-		elem.textContent += str + "\n";
-		elem.scrollTop = elem.scrollHeight;
+
+	var log = log_out;
+
+	function toggle_log() {
+		if (log == log_nop) {
+			log = log_out;
+			return true;
+		}
+		else {
+			log = log_nop;
+			return false;
+		}
+	}
+
+	function log_nop(str) {
+	}
+	function log_out(str) {
+		stdlog += str + "\n";
+		logElem.textContent = stdlog;
+		logElem.scrollTop = logElem.scrollHeight;
 	}
 
 	function parseLine(line, lineno) {
@@ -321,9 +343,10 @@
 		var timer = null;
 		function step() {
 			if(vm.step()) {
-				timer = setTimeout(step, 10);
+				timer = setTimeout(step, 0);
 			}
 		}
+
 		
 		document.getElementById('stop').onclick = function() {
 			clearTimeout(timer);
