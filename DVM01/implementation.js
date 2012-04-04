@@ -201,12 +201,6 @@
 	function getStdin() {
 		return document.getElementById('input').value;
 	}
-	function clearOutput() {
-		stdout = '';
-		stdlog = '';
-		outElem.textContent = '';
-		logElem.textContent = '';
-	}
 	function writeString(str) {
 		stdout += str;
 		outElem.textContent = stdout;
@@ -314,9 +308,25 @@
 		return memory;
 	}
 
+	document.getElementById('logtoggle').onclick = function() {
+		if(toggle_log()) {
+			document.getElementById('logtoggle').textContent = 'Disable Log';
+		}
+		else {
+			document.getElementById('logtoggle').textContent = 'Enable Log';
+		}
+	}
+	document.getElementById('clearlog').onclick = function() {
+		stdlog = '';
+		logElem.textContent = '';
+	}
+
+	document.getElementById('clearoutput').onclick = function() {
+		stdout = '';
+		outElem.textContent = '';
+	}
 
 	document.getElementById('run').onclick = function() {
-		clearOutput();
 		log("USER: Clicked start");
 
 		log("RUNNER: Parsing");
