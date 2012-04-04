@@ -364,6 +364,7 @@
 		}
 
 		log("RUNNER: Starting execution");
+		//while(vm.step());
 		step();
 	}
 })();
