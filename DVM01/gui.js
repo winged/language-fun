@@ -1,5 +1,4 @@
 window.VMGUI = function(cbStart, cbStop) {
-	var source  = document.getElementById('code' ).value;
 	var input   = document.getElementById('input').value;
 	var inptr   = 0;
 
@@ -55,14 +54,25 @@ window.VMGUI = function(cbStart, cbStop) {
 	}
 
 	document.getElementById('run').onclick = function() {
+		log("USER: Clicked start");
 		cbStart();
 	}
 	document.getElementById('stop').onclick = function() {
+		log("USER: Stopped execution");
 		cbStop();
 	}
 
+	function getSource() {
+		return document.getElementById('code' ).value;
+	}
+	function resetInput() {
+		input = document.getElementById('input').value;
+		inptr = 0;
+	}
+
 	return {
-		source: source,
+		source: getSource,
+		rewind: resetInput,
 		read:   readChar,
 		write:  write,
 		log:    log,

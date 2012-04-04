@@ -1,23 +1,33 @@
 (function(){
 
+	// Initialize GUI. Pass callbacks for starting and stopping.
 	var gui    = window.VMGUI(start, stop);
-	var parser = window.PARSER(gui.log);
-	var log    = gui.log; // convenience shortcut
 
+	// Initialize parser. Pass log callback from GUI, so parser can
+	// inform user about stuff that happens
+	var parser = window.PARSER(gui.log);
+
+	// convenience shortcut
+	var log    = gui.log;
+
+	// We want to be able to stop execution. So this is going to 
+	// contain a setTimeout() thingy when running
 	var stepTimer = null;
 
+	// Cancel running of next step
 	function stop() {
 		clearTimeout(stepTimer);
-		log("USER: Stopped execution");
 	}
 
+	// Parse source from GUI, initialize VM, start execution
 	function start() {
-		log("USER: Clicked start");
+		// go back to beginning of input
+		gui.rewind();
 
 		log("RUNNER: Parsing");
-		var program = parser.parse(gui.source);
+		var program = parser.parse(gui.source());
 		if (!parser.okay()) {
-			log(parser.error());
+			// Error already logged by parser
 			return;
 		}
 
@@ -29,6 +39,8 @@
 			gui.log
 		);
 
+		// execute one step, then set timer for the next one.
+		// If vm.step() returns false, the program ended.
 		function step() {
 			if(vm.step()) {
 				stepTimer = setTimeout(step, 0);
