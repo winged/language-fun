@@ -83,6 +83,11 @@ window.VM = function (init_mem, fn_readchar, fn_write, log) {
 		fixaddr(addr);
 		memory[addr] = memory[addr] * val;
 	}
+	function op_div(addr, val) {
+		log("    DIV "+addr + " " + val);
+		fixaddr(addr);
+		memory[addr] = parseInt(memory[addr] / val);
+	}
 	function op_jnz(addr, val) {
 		log("    JNZ "+addr + " " + val);
 		fixaddr(addr);
