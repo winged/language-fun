@@ -19,6 +19,10 @@ window.VM = function (init_mem, fn_readchar, fn_write, log) {
 			case 0x3:
 				return 2;
 
+			// JGT needs 3 params (size 4): jumptarget, op1, op2
+			case 0xB:
+				return 4;
+
 			// All others need 2 parameters (size 3)
 			default:
 				return 3;
@@ -56,6 +60,12 @@ window.VM = function (init_mem, fn_readchar, fn_write, log) {
 		fixaddr(addr);
 		memory[addr] = val;
 	}
+	function op_copy(addr1, addr2) {
+		log("    COPY "+addr1 + " " + addr2);
+		fixaddr(addr1);
+		fixaddr(addr2);
+		memory[addr1] = memory[addr2];
+	}
 	function op_readc(addr) {
 		log("    READC "+addr);
 		op_set(addr, fn_readchar());
@@ -77,6 +87,13 @@ window.VM = function (init_mem, fn_readchar, fn_write, log) {
 		log("    JNZ "+addr + " " + val);
 		fixaddr(addr);
 		if(val != 0) {
+			memory[0] = addr;
+		}
+	}
+	function op_jgt(addr, val1, val2) {
+		log("    JGT "+addr + " " + val1 + ", " + val2);
+		fixaddr(addr);
+		if(val1 > val2) {
 			memory[0] = addr;
 		}
 	}
@@ -138,19 +155,22 @@ window.VM = function (init_mem, fn_readchar, fn_write, log) {
 		}
 
 		switch(opbase) {
-			case 0x0: log("VM: "+opinfo+" NOP   "); op_nop   ();                   break;
-			case 0x1: log("VM: "+opinfo+" READC "); op_readc (param(0));           break;
-			case 0x2: log("VM: "+opinfo+" WRITEC"); op_writec(param(0));           break;
-			case 0x3: log("VM: "+opinfo+" WRITEI"); op_writei(param(0));           break;
-			case 0x4: log("VM: "+opinfo+" SET   "); op_set   (param(0), param(1)); break;
-			case 0x5: log("VM: "+opinfo+" ADD   "); op_add   (param(0), param(1)); break;
-			case 0x6: log("VM: "+opinfo+" SUB   "); op_sub   (param(0), param(1)); break;
-			case 0x7: log("VM: "+opinfo+" MUL   "); op_mul   (param(0), param(1)); break;
-			case 0x8: log("VM: "+opinfo+" DIV   "); op_div   (param(0), param(1)); break;
-			case 0x9: log("VM: "+opinfo+" JZ    "); op_jz    (param(0), param(1)); break;
-			case 0xA: log("VM: "+opinfo+" JNZ   "); op_jnz   (param(0), param(1)); break;
-			case 0xE: log("VM: "+opinfo+" DUMP  "); op_dump  (param(0), param(1)); break;
-			case 0xF: log("VM: "+opinfo+" END   "); op_end   ();                   break;
+			case 0x0: log("VM: "+opinfo+" NOP   "); op_nop   ();                             break;
+			case 0x1: log("VM: "+opinfo+" READC "); op_readc (param(0));                     break;
+			case 0x2: log("VM: "+opinfo+" WRITEC"); op_writec(param(0));                     break;
+			case 0x3: log("VM: "+opinfo+" WRITEI"); op_writei(param(0));                     break;
+			case 0x4: log("VM: "+opinfo+" SET   "); op_set   (param(0), param(1));           break;
+			case 0x5: log("VM: "+opinfo+" ADD   "); op_add   (param(0), param(1));           break;
+			case 0x6: log("VM: "+opinfo+" SUB   "); op_sub   (param(0), param(1));           break;
+			case 0x7: log("VM: "+opinfo+" MUL   "); op_mul   (param(0), param(1));           break;
+			case 0x8: log("VM: "+opinfo+" DIV   "); op_div   (param(0), param(1));           break;
+			case 0x9: log("VM: "+opinfo+" JZ    "); op_jz    (param(0), param(1));           break;
+			case 0xA: log("VM: "+opinfo+" JNZ   "); op_jnz   (param(0), param(1));           break;
+			case 0xB: log("VM: "+opinfo+" JGT   "); op_jgt   (param(0), param(1), param(2)); break;
+			case 0xC: log("VM: "+opinfo+" COPY  "); op_copy  (param(0), param(1));           break;
+			case 0xE: log("VM: "+opinfo+" DUMP  "); op_dump  (param(0), param(1));           break;
+
+			case 0xF: log("VM: "+opinfo+" END   "); op_end   ();                             break;
 			default:
 				// error!
 				log("VM: "+opinfo+" ERROR: INVALID OP base="+opbase + " variant="+variant+", ABORTING");

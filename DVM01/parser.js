@@ -13,6 +13,8 @@ window.PARSER = function(log) {
 		'DIV':    {base: 0x80, needlength: 3},
 		'JZ':     {base: 0x90, needlength: 3},
 		'JNZ':    {base: 0xA0, needlength: 3},
+		'JGT':    {base: 0xB0, needlength: 4},
+		'COPY':   {base: 0xC0, needlength: 3},
 		'DUMP':   {base: 0xE0, needlength: 3},
 		// ...
 		'END':    {base: 0xF0, needlength: 1},

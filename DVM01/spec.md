@@ -36,6 +36,8 @@ Opcodes
 * DIV     addr  n        divides value at addr by n
 * JZ      addr  n        Jumps to opcode at addr if n is zero
 * JNZ     addr  n        Jumps to opcode at addr if n is not zero
+* JGT     addr  n1 n2    Jumps to opcode at addr if n1 is greater than n2.
+* COPY    addr1 addr2    Writes content of addr2 to addr1 (de-reference pointer)
 * DUMP    addr1 addr2    Dumps the memory area between addr1 and addr2
 * END                    Exits the program
 Opcode macro ideas
