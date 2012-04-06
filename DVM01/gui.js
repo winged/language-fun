@@ -3,7 +3,12 @@ window.VMGUI = function(cbStart, cbStop) {
 	var inptr   = 0;
 
 	function readChar() {
-		return input[inptr++].charCodeAt(0);
+		if (inptr >= input.length) {
+			return 0;
+		}
+		var ret = input[inptr].charCodeAt(0);
+		inptr += 1;
+		return ret;
 	}
 
 	var stdout  = '', outElem = document.getElementById('output');

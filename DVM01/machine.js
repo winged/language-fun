@@ -94,11 +94,7 @@ window.VM = function (init_mem, fn_readchar, fn_write, log) {
 
 		var chars = ": \n";
 		for (var i = addr1; i <= addr2; i++) {
-			fn_write(i+1,                 'int' ); // lineno
-			fn_write(chars.charCodeAt(0), 'char'); // ":"
-			fn_write(chars.charCodeAt(1), 'char'); // " "
-			fn_write(memory[i],           'int' ); // memory content
-			fn_write(chars.charCodeAt(2), 'char'); // "\n"
+			fn_write("DUMP: addr["+i+"] = " + memory[i] + "\n")
 		}
 	}
 	function op_end() {
