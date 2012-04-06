@@ -15,15 +15,6 @@ window.VMGUI = function(cbStart, cbStop) {
 		outElem.scrollTop = outElem.scrollHeight;
 	}
 
-	function write(value, mode) {
-		if (mode == 'char') {
-			writeString(String.fromCharCode(value))
-		}
-		else {
-			writeString(value.toString());
-		}
-	}
-
 	var logEnabled = true;
 	function log(str) {
 		if(logEnabled) {
@@ -74,7 +65,7 @@ window.VMGUI = function(cbStart, cbStop) {
 		source: getSource,
 		rewind: resetInput,
 		read:   readChar,
-		write:  write,
+		write:  writeString,
 		log:    log,
 	};
 };

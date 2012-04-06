@@ -62,11 +62,11 @@ window.VM = function (init_mem, fn_readchar, fn_write, log) {
 	}
 	function op_writei(val) {
 		log("    WRITEI "+val);
-		fn_write(val, 'int');
+		fn_write(val.toString());
 	}
 	function op_writec(val) {
 		log("    WRITEC "+val);
-		fn_write(val, 'char');
+		fn_write(String.fromCharCode(val))
 	}
 	function op_jnz(addr, val) {
 		log("    JNZ "+addr + " " + val);
