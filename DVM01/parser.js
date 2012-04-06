@@ -20,9 +20,10 @@ window.PARSER = function(log) {
 
 	function parseLine(line, lineno) {
 		var chomped = line
+			.replace(/#.*/, '') // remove comments
 			.replace(/^\s*/, '') // remove leading space
 			.replace(/\s*$/, '') // remove trailing space
-			.replace(/#.*/, ''); // remove comments
+		;
 
 		if(chomped.length == 0) {
 			// empty line, or (already-removed) comment
@@ -31,7 +32,7 @@ window.PARSER = function(log) {
 		var words = chomped.split(/\s+/);
 
 
-		log("PARSER: LINE " + lineno + ": " + line);
+		log("PARSER: LINE " + lineno + ": " + chomped);
 
 		// see if opcode is valid
 		if(words[0] in opcodeInfo) {
