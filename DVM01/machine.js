@@ -68,6 +68,11 @@ window.VM = function (init_mem, fn_readchar, fn_write, log) {
 		log("    WRITEC "+val);
 		fn_write(String.fromCharCode(val))
 	}
+	function op_mul(addr, val) {
+		log("    MUL "+addr + " " + val);
+		fixaddr(addr);
+		memory[addr] = memory[addr] * val;
+	}
 	function op_jnz(addr, val) {
 		log("    JNZ "+addr + " " + val);
 		fixaddr(addr);
