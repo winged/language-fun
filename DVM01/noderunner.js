@@ -8,10 +8,14 @@ var parser = PARSER.PARSER(do_log);
 
 function do_log(text) {
 	if(!do_log.disable) {
-		console.error(text)
+		console.log(text)
 	}
 }
 do_log.disable = false;
+
+function output(text) {
+	process.stdout.write(text)
+}
 
 function getsource() {
 	if (process.argv.length < 3) {
@@ -58,7 +62,7 @@ do_log("RUNNER: Initializing VM");
 var vm = MACHINE.VM(
 	program,
 	readchar,
-	console.log,
+	output,
 	do_log
 );
 
