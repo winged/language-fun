@@ -2,26 +2,42 @@
 
 var MACHINE = require('./machine.js')
 var PARSER  = require('./parser.js')
-//var process = require('process')
 var fs      = require('fs')
 
-var parser = PARSER.PARSER(console.error);
+var parser = PARSER.PARSER(do_log);
 
-// We want to be able to stop execution. So this is going to 
-// contain a setTimeout() thingy when running
-var stepTimer = null;
-
-// Cancel running of next step
-function stop() {
-	clearTimeout(stepTimer);
+function do_log(text) {
+	if(!do_log.disable) {
+		console.error(text)
+	}
 }
+do_log.disable = false;
 
 function getsource() {
-	if (process.argv.length != 3) {
-		console.error('Need source file as first argument.')
+	if (process.argv.length < 3) {
+		// TODO: Usage message would be better here. OR, assume
+		// stdin
+		console.error('Error: No input file specified')
 		process.exit(1)
 	}
-	var source = process.argv[2]
+	var source = null;
+	var args   = process.argv.slice(2)
+
+	args.forEach(function(opt) {
+		if (opt[0] == '-') {
+			switch(opt) {
+				case '-nolog': do_log.disable = true; break;
+				default:
+					console.error('Unknown argument: ' + opt)
+					process.exit(1)
+			}
+		}
+		else {
+			// we assume that an argument that doesn't start 
+			// with "-" is the source file.
+			source = opt
+		}
+	})
 	return fs.readFileSync(source).toString()
 }
 
@@ -30,29 +46,24 @@ function readchar() {
 	return 0
 }
 
-console.error("RUNNER: Parsing");
-var program = parser.parse(getsource());
+var src = getsource()
+do_log("RUNNER: Parsing");
+var program = parser.parse(src);
 if (!parser.okay()) {
 	// Error already logged by parser
 	return;
 }
 
-console.error("RUNNER: Initializing VM");
+do_log("RUNNER: Initializing VM");
 var vm = MACHINE.VM(
 	program,
 	readchar,
 	console.log,
-	console.error
+	do_log
 );
 
-// execute one step, then set timer for the next one.
-// If vm.step() returns false, the program ended.
-function step() {
-	if(vm.step()) {
-		stepTimer = setTimeout(step, 0);
-	}
+do_log("RUNNER: Starting execution");
+while(vm.step()) {
+	// do nothing..
 }
-
-console.error("RUNNER: Starting execution");
-step();
 
