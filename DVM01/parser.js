@@ -1,4 +1,5 @@
-window.PARSER = function(log) {
+
+exports.PARSER = function(log) {
 	var opcodeInfo = {
 		// MSB defines opcode base, LSB defines variant
 		'START':  {base: 0x00, needlength: 1},

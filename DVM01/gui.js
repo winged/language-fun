@@ -1,4 +1,4 @@
-window.VMGUI = function(cbStart, cbStop) {
+exports.VMGUI = function(cbStart, cbStop) {
 	var input   = document.getElementById('input').value;
 	var inptr   = 0;
 

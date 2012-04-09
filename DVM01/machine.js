@@ -1,4 +1,4 @@
-window.VM = function (init_mem, fn_readchar, fn_write, log) {
+exports.VM = function (init_mem, fn_readchar, fn_write, log) {
 	var memory = init_mem;
 
 	var running = true;

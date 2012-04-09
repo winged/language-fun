@@ -1,11 +1,11 @@
 (function(){
 
 	// Initialize GUI. Pass callbacks for starting and stopping.
-	var gui    = window.VMGUI(start, stop);
+	var gui    = exports.VMGUI(start, stop);
 
 	// Initialize parser. Pass log callback from GUI, so parser can
 	// inform user about stuff that happens
-	var parser = window.PARSER(gui.log);
+	var parser = exports.PARSER(gui.log);
 
 	// convenience shortcut
 	var log    = gui.log;
