@@ -38,7 +38,7 @@ exports.VM = function (init_mem, fn_readchar, fn_write, log) {
 
 	/** make sure addr exists. adds zeroes to end of memory until addr exists. */
 	function fixaddr(addr) {
-		while(addr > memory.length) {
+		while(addr >= memory.length) {
 			memory.push(0);
 		}
 	}
