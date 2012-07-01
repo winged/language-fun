@@ -19,7 +19,7 @@ Macros
 
 A macro definition is just a set of instructions that can be
 grouped together, possibly with parameters. I'm thinking about
-some syntax like follows (See sample-stack.txt in DVM01 for
+some syntax like follows (See [DVM01/sample-stack.txt](DVM01/sample-stack.txt) for
 implementation details of this example):
 
     !MACRO 1 PUSH      # 1 for one-parameter macro
