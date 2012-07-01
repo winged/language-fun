@@ -22,7 +22,7 @@ grouped together, possibly with parameters. I'm thinking about
 some syntax like follows (See sample-stack.txt in DVM01 for
 implementation details of this example):
 
-    !MACRO 1 PUSH      # 1 for two-parameter macro
+    !MACRO 1 PUSH      # 1 for one-parameter macro
         SET  1   *A    # *A is the first parameter replacement
         SET  2   @0
         JNZ @3    1
