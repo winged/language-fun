@@ -15,6 +15,36 @@ Plans for DVM02
       - Returning
 
 
+Jump labels
+-----------
+
+Jump labels are named labels that specify the address that they're
+at. They can then be used just like numbers - of course, this is most
+useful in jump instructions, but can be used for other things as well.
+
+Here's an example on how to define a jump label: You just "invent" a
+word and append a colon to it, like follows:
+
+    increment_reg1:
+    ADD 1 1
+
+Afterwards, you can use that label in a jump, for example:
+
+    JNZ increment_reg1  1
+
+Of course, you can also use it to name memory locations (which we
+sometimes called registers):
+
+    program_counter: START
+    stack_operand:   NOP
+    stack_pointer:   NOP
+
+Which can then be used in operations, instead of the fixed number:
+
+    ADD stack_pointer 1
+
+This should lead to much, much more readable code.
+
 Macros
 ------
 
