@@ -2,7 +2,10 @@ Plans for DVM02
 ===============
 
 * Keep the VM part of DVM01 exactly the same
-* Extend the compiler to support aliases / named jump labels
+* Extend the compiler to support aliases / named jump labels (DONE)
+   * Update sample-eratosthenes.txt (TODO)
+   * Update sample-fibonacci.txt (DONE)
+   * Update sample-stack.txt     (DONE)
 * Extend the compiler to support definition and execution
   of macros.
 * Provide a runtime collection of macros:
