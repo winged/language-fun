@@ -1,141 +1,100 @@
-# Note for the quick reader: I will be explaining this in more
-# detail soon on my blog - check out http://avawn.net
 
-START #0   - program counter, as usual
+# Registers and Initialisators
+
+pc:              START #0   - program counter, as usual
 
 
-NOP   #1   - placeholder for push/pop value
-NOP   #2   - pointer to return address
-NOP   #3   - pointer to PUSH code
-NOP   #4   - pointer to POP code
-NOP   #5   - stack position pointer
+stack_operand:   NOP   #1   - placeholder for push/pop value
+stack_return:    NOP   #2   - pointer to return address
+stack_pointer:   NOP   #3   - stack position pointer
 
-NOP   #s   - Stack bottom ( 0)
-NOP   #s   - Stack        ( 1)
-NOP   #s   - Stack        ( 2)
-NOP   #s   - Stack        ( 3)
-NOP   #s   - Stack        ( 4)
-NOP   #s   - Stack        ( 5)
-NOP   #s   - Stack        ( 6)
-NOP   #s   - Stack        ( 7)
-NOP   #s   - Stack        ( 8)
-NOP   #s   - Stack        ( 9)
-NOP   #s   - Stack        (10)
+stack_bottom:    NOP   #s   - Stack bottom ( 0)
+                 NOP   #s   - Stack        ( 1)
+                 NOP   #s   - Stack        ( 2)
+                 NOP   #s   - Stack        ( 3)
+                 NOP   #s   - Stack        ( 4)
+                 NOP   #s   - Stack        ( 5)
+                 NOP   #s   - Stack        ( 6)
+                 NOP   #s   - Stack        ( 7)
+                 NOP   #s   - Stack        ( 8)
+                 NOP   #s   - Stack        ( 9)
+                 NOP   #s   - Stack        (10)
 
 
 # Initialize stack data
-SET 2 0 # return address pointer
-SET 5 5 # position pointer
+SET stack_pointer stack_bottom
+
+# Go to start of program
+JNZ start_program   1
+
+push:
+   SET @stack_pointer @stack_operand # Store value to top of stack
+   ADD  stack_pointer  1
+
+   WRITEC 43    # Write "+", for logging PUSH
+   WRITEI @stack_operand    # Log PUSH value
+   WRITEC 10    # Newline after logging
+
+   # Prepare for returning. UNHOLY MAGIC! Increase return address by
+   # 3 registers to compensate for the JNZ at the call site
+   ADD  stack_return  3
+   JNZ @stack_return  1
 
 
-# Begin PUSH code. Assume the following facts:
-#  * @1 is the value to be pushed
-#  * @2 is the address to continue after pushing
-#  * @5 points to the memory cell at the top
-SET 3 @0     # start address of next instruction is now in @3
-ADD 3 6      # move start address past this add instruction and the JMP of the next line
-ADD 0 21     # JMP well below the PUSH code's body. Only executed once, while initializing!
+pop:
+   SUB   stack_pointer  1
+   COPY  stack_operand @stack_pointer # Fetch stack top into register 1
+   SET  @stack_pointer  0             # Clear stack content - just for debugging purposes
 
-ADD 5 1      # Increase stack pointer
-SET @5 @1    # Store value to top of stack
-ADD 2 3      # UNHOLY MAGIC! Increase return address by 3 registers. Syntactic sugar!
+   WRITEC 45    # Write "-", for logging POP
+   WRITEI @stack_operand    # Log POP value
+   WRITEC 10    # Newline after logging
 
-WRITEC 43    # Write "+", for logging PUSH
-WRITEI @1    # Log PUSH value
-WRITEC 10    # Newline after logging
-
-JNZ @2  1    # Jump back to the return address
-
-NOP          # Some NOPs to catch the relative jump above (ADD 0 12)
-NOP
-NOP
-NOP
-NOP          # That should be enough...
+   # Prepare for returning. UNHOLY MAGIC! Increase return address by
+   # 3 registers to compensate for the JNZ at the call site
+   ADD  stack_return  3
+   JNZ @stack_return  1
 
 
-# Begin POP code. Assume the following facts:
-#  * @1 is the value to be pushed
-#  * @2 is the address to continue after pushing
-#  * @5 points to the memory cell at the top
-SET 4 @0     # start address of next instruction is now in @4
-ADD 4 6      # move start address past this add instruction and the JMP of the next line
-ADD 0 24     # JMP well below the POP code's body. Only executed once, while initializing!
+start_program:
+    # Okay, here's a sample program. We push the values 1-5, then dump the register space,
+    # then exit.
+    SET  stack_operand   1  # first value
+    SET  stack_return   @pc # Return address
+    JNZ  push            1  # Call PUSH
 
-COPY  1 @5    # Fetch stack top into register 1
-SET  @5  0    # Clear stack content - just for debugging purposes
-SUB   5  1    # Decrease stack pointer by 1
-ADD   2  3    # UNHOLY MAGIC! Increase return address by 3 registers. Syntactic sugar!
+    SET  stack_operand   2  # second value
+    SET  stack_return   @pc # Return address
+    JNZ  push            1  # Call PUSH
 
-WRITEC 45    # Write "-", for logging POP
-WRITEI @1    # Log POP value
-WRITEC 10    # Newline after logging
+    SET  stack_operand   3  # third value
+    SET  stack_return   @pc # Return address
+    JNZ  push            1  # Call PUSH
 
-JNZ @2  1    # Jump back to the return address
+    SET  stack_operand   4  # fourth value
+    SET  stack_return   @pc # Return address
+    JNZ  push            1  # Call PUSH
 
-NOP          # Again, some NOPs to catch the jump
-NOP
-NOP
-NOP
-NOP
+    SET  stack_operand   5  # fifth value
+    SET  stack_return   @pc # Return address
+    JNZ  push            1  # Call PUSH
 
-# Actual program starts here. The PUSH/POP code brings some unholy magic with it
-# that allows us to simplify the call: It automatically increases the return
-# address by 3 registers, therefore pointing to the next instruction AFTER the 
-# jump. Without it, your code would look something like this:
-#    
-#    SET 1  9   # Set the value to be pushed
-#    SET 2 @0   # Return address - but it'd point to the JNZ instruction itself, so more
-#                 fiddling is required...
-#    ADD 2   6  # Jump over the ADD instruction as well as the actual JNZ
-#    JNZ @3  1  # Now finally we can JMP - the return address is the instruction below.
-#    NOP        # ... code continues here after push
-#
-# Now WITH our syntactic sugar, the call becomes a lot simpler:
-#    SET 1   9  # Set the value to be pushed
-#    SET 2  @0  # Return address - automatically increased by PUSH/POP code
-#    JNZ @3  1  # Now we can JMP - the return address is the instruction below.
-#    NOP        # ... code continues here after push
+    # Print the top value from stack
+    SET stack_return  @0             # Return address
+    JNZ pop            1             # Call POP
+    WRITEI            @stack_operand # recently pop'ed value
+    WRITEC             10            # newline
 
 
-# Okay, here's a sample program. We push the values 1-5, then dump the register space,
-# then exit.
-SET  1    1  # first value
-SET  2   @0  # Return address
-JNZ @3    1  # Call PUSH
+    # Debug - dump stack vars
+    WRITEC 10     # newline
+    WRITEC 10     # newline
+    DUMP    1 3   # Stack data
 
-SET  1    2  # second value
-SET  2   @0  # Return address
-JNZ @3    1  # Call PUSH
+    # Debug 2 - dump stack content
+    WRITEC 10     # newline
+    WRITEC 10     # Newline
+    DUMP    4 14  # Stack content
 
-SET  1    3  # third value
-SET  2   @0  # Return address
-JNZ @3    1  # Call PUSH
-
-SET  1    4  # fourth value
-SET  2   @0  # Return address
-JNZ @3    1  # Call PUSH
-
-SET  1    5  # fifth value
-SET  2   @0  # Return address
-JNZ @3    1  # Call PUSH
-
-
-# Print the top value from stack
-SET 2  @0   # Return address
-JNZ @4  1   # Call POP
-WRITEI @1   # recently pop'ed value
-WRITEC 10   # newline
-
-
-# Debug - dump stack vars
-WRITEC 10  # newline
-WRITEC 10  # newline
-DUMP 1 5   # Stack data
-
-# Debug 2 - dump stack content
-WRITEC 10  # newline
-WRITEC 10  # Newline
-DUMP 6 16  # Stack content
-
-# End program
-END
+    # End program
+    END
