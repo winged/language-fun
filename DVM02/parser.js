@@ -24,7 +24,7 @@ exports.PARSER = function(log) {
 
 	var okay  = true;
 	var error = '';
-	function decode(opBase, operands) {
+	function decode(opBase, operands, known_jumplabels) {
 		// Last 4 bits of opBase are markers for indirect
 		// access to the operand. They will be set to 1
 		// if the operand starts with an @
@@ -46,8 +46,20 @@ exports.PARSER = function(log) {
 				operand.content = operand.content.substr(1);
 			}
 
-			// TODO: decode aliases
-			operation.push(parseInt(operand.content));
+			var decoded = null;
+			if (operand.content in known_jumplabels) {
+				decoded = parseInt(known_jumplabels[operand.content])
+			}
+			else {
+				decoded = parseInt(operand.content);
+			}
+
+			if(isNaN(decoded)) {
+				log("Parse error: Expected int, got something ("+operand.content+") else at line " + operand.line);
+				return null;
+			}
+			operation.push(decoded);
+
 		}
 
 		// Before returning, we need to insert the operator
@@ -64,20 +76,72 @@ exports.PARSER = function(log) {
 			return null;
 		}
 
+		// Stores addresses of known jump labels
+		var jumplabels = {};
+		var jumplabelsLength = 0;
+
+
+		// Double-scan tokens: First for jumplabels (so we
+		// can do forward-jumps), then for actual code.
+		// We have to do this, because otherwise, we might
+		// encounter a jump label before it's actually defined,
+		// leaving us with a rather complicated situation to
+		// resolve it later on.
+
+
+		for (i = 0; i < tokens.length; i++) {
+			var op = tokens[i];
+			if (op.type == 'jumplabel') {
+				// The address is not directly mapped to the token position!
+				// Since jumplabels don't end up in the memory image, every
+				// jump label adds another bit to the gap between the token
+				// index and the memory location. We compensate this by
+				// calculating the difference between number of already-known
+				// jump labels and the token index.
+				//
+				// Note that this will likely need some rework in the future,
+				// as this won't be that easy when the memory model gets more
+				// complicated. But for now, it suffices.
+				var addr = i - jumplabelsLength;
+				jumplabelsLength++;
+
+				jumplabels[op.content] = addr;
+				log("PARSER(line "+op.line+"): Jumplabel " + op.content + ": " + addr);
+			}
+		}
+
+		// Now, scan for code
 		var memory = [];
 		var opcode;
 		while (opcode = tokens.shift()) {
+			var operands = [];
+
 			// opcode.content MUST be an operation - otherwise
 			// we have a syntax error.
-			if(!(opcode.content in opcodeInfo)) {
+
+			if (opcode.type == 'jumplabel') {
+				// already handled above
+				continue;
+			}
+			else if(!(opcode.content in opcodeInfo)) {
 				log("Syntax error on line " + opcode.line + ": Opcode unknown:" + opcode.content)
 				return null;
 			}
 			var info = opcodeInfo[opcode.content];
 
-			var operands = []
-			for (var i = 0; i < info.numArgs; i++) {
-				operands.push(tokens.shift());
+			while (operands.length < info.numArgs) {
+				var op = tokens.shift();
+				if (op.type == 'word') {
+					operands.push(op);
+				}
+				else if (op.type == 'jumplabel') {
+					// already handled above
+				}
+				else {
+					// Error, unknown token type!
+					log("Unknown token type on line " + op.line);
+					return null;
+				}
 			}
 
 			// Decode operation: Operands may still contain
@@ -86,7 +150,8 @@ exports.PARSER = function(log) {
 			// to the decode function - the name is not required
 			// anymore...
 
-			var operation = decode(info.base, operands);
+			var operation = decode(info.base, operands, jumplabels);
+			log("PARSER(line "+opcode.line+"): OP " + opcode.content + "<" + operation.join(", ") + ">");
 
 			// Store decoded operation in memory
 			for (var j = 0; j < operation.length; j++) {
@@ -111,7 +176,15 @@ exports.PARSER = function(log) {
 		function word(match) {
 			tokens.push({
 				line:    currentLine,
-				content: match[1]
+				content: match[1],
+				type:    'word'
+			});
+		}
+		function jumplabel(match) {
+			tokens.push({
+				line:    currentLine,
+				content: match[1],
+				type:    'jumplabel'
 			});
 		}
 		function dontCare(match) {
@@ -124,16 +197,18 @@ exports.PARSER = function(log) {
 		// Regexes used for parsing. The parser works as
 		// follows: Each of those regexps is tried on the
 		// input. If one matches, the corresponding callback
-		// function is called, and the matching part is
-		// removed from the input. This is then repeated until
-		// either the string didn't change it's size (which means
-		// something unknown in input), or the input string is
-		// reduced to an empty string (parsing done).
+		// function is called with the match result, and the
+		// matching part is removed from the input. This is
+		// repeated until either the string didn't change it's
+		// size (which means something unknown in input), or
+		// the input string is reduced to an empty string
+		// (parsing done).
 		var checks = [
-			{ re: /^([!@\w\d]+)/, cb: word      }, // operator, operand
-			{ re: /^#[^\n]*/,     cb: dontCare }, // a comment
-			{ re: /^[\n]/,        cb: newline   }, // newline
-			{ re: /^[\s]+/,       cb: dontCare }  // other whitespace
+			{ re: /^([\w\d]+):/, cb: jumplabel }, // jump label definition
+			{ re: /^([@\w\d]+)/, cb: word      }, // operator, operand
+			{ re: /^#[^\n]*/,    cb: dontCare  }, // a comment
+			{ re: /^[\n]/,       cb: newline   }, // newline
+			{ re: /^[ \t]+/,     cb: dontCare  }  // other whitespace
 		]
 
 		while (text.length > 0) {
@@ -147,6 +222,8 @@ exports.PARSER = function(log) {
 				// If we reach this line, we have a match!
 				check.cb(match);
 				text = text.replace(check.re, '');
+
+				break;
 			}
 			var lenAfter = text.length;
 			if (lenAfter == lenBefore) {
