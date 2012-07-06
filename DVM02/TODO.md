@@ -2,6 +2,7 @@ Plans for DVM02
 ===============
 
 * Keep the VM part of DVM01 exactly the same
+* Extend the compiler to support aliases / named jump labels
 * Extend the compiler to support definition and execution
   of macros.
 * Provide a runtime collection of macros:
