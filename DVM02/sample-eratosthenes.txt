@@ -1,4 +1,4 @@
-# This is an implementation of the sieve of Eratosthenes algorithm for DVM01.
+# This is an implementation of the sieve of Eratosthenes algorithm for DVM02.
 
 # It works roughly like this: Since the VM provides a virtually arbitrary sized
 # memory, and the VM initializes every memory word with a value of zero, we use
@@ -7,83 +7,72 @@
 # For simplicity, we loop twice: First, a marker run that marks all multiples of
 # a number as prime, and second, an output run, which prints all primes to the output.
 
-# First, use a nop slide to initialize "registers". Note that
-# the first one is required, as address 0 is used by the
-# VM to store the program counter.
-
-START # 0: contains program counter
-NOP   # 1: Points to the beginning of the data
-NOP   # 2: Largest number to check
-NOP   # 3: Current step size
-NOP   # 4: Pointer to currently evaluated cell
-NOP   # 5: Start address of outer marker loop and print loop
-NOP   # 6: Start address of inner marker loop
-NOP   # 7: Conditional accumulator for loop termination
-NOP   # 8: Counter for printing
+pc:            START # 0: contains program counter
+max_number:    NOP   # 1: Largest number to check
+step_size:     NOP   # 2: Current step size
+current_cell:  NOP   # 3: Pointer to currently evaluated cell
+temp_helper:   NOP   # 4: Conditional accumulator for loop termination
+print_counter: NOP   # 5: Counter for printing
 
 # Initialisation
 
-SET 1 100 # Marks the beginning of data section. TODO: calculate dynamically
-          # Note: this has been determined by using DUMP. When the program
-          # expands, this MUST be increased, or you WILL get ugly results :)
+SET max_number 300 # Biggest number to check for. Well, approximately, as we're not
+                   # very careful about when to stop (allows us some simplifications)
 
-SET 2 100 # Biggest number to check for. Well, approximately, as we're not
-          # very careful about when to stop (allows us some simplifications)
 
-# Begin outer marker loop (counting up the step size).
+SET step_size    2           # Step size, begins with 2
+SET current_cell data_start  # Pointer to currently evaluated cell.
 
-SET 3 2   # Step size, begins with 2
-SET 4 @1  # Pointer to currently evaluated cell.
+outer_marker_loop:
 
-SET 5 @0   # Marker for outer loop
+	SET current_cell data_start   # Start out at position zero
+	ADD current_cell @step_size   # Add current-step-size to our pointer.
 
-	SET 4 @1   # Start out at position zero
-	ADD 4 @3   # Add current-step-size to our pointer.
-
-	# Begin inner marker loop (do the actual marking)
-
-	SET 6 @0   # Marker for inner loop
-		ADD 4 @3   # Add current-step-size to our pointer
-		SET @4 1   # Mark position as non-prime
+	inner_marker_loop:
+		ADD current_cell  @step_size
+		SET @current_cell  1         # Mark position as non-prime
 
 		# Figure out if we need to re-run inner loop:
 		# If pointer is bigger than position of largest number
 		# to check, we abort the loop.
 
-		SET 7  @1     # beginning-of-data
-		ADD 7  @2     # add number range
-		JGT @6 @7 @4  # Re-run loop if upper bound (@7) > current-ponter (@4)
+		SET temp_helper  data_start     # beginning-of-data
+		ADD temp_helper  @max_number    # add number range
+		JGT inner_marker_loop @temp_helper @current_cell
 
-	ADD 3  1 # Increase step-size
+	ADD step_size  1
 
 	# Figure out if we need to re-run inner loop:
 	# If step-size is bigger than half of the number range,
 	# we abort the outer loop.
 
-	SET 7  @3     # 7 is now step-size
-	MUL 7   2     # 7 is now step-size * 2
-	JGT @5  @2 @7 # Re-run loop if number-range (@2) > step-size * 2 (@7)
+	SET temp_helper  @step_size     # temp_helper is now step-size
+	MUL temp_helper   2     # temp_helper is now step-size * 2
+
+	JGT outer_marker_loop  @max_number @temp_helper
 
 
-# Prepare printing
+# Re-init pointer-to-current-cell for printing
+SET current_cell  data_start
 
-SET 8  0    # Output counter, so we don't have to calculate offset
-SET 4  @1   # Re-init pointer-to-current-cell
+print_loop:
 
-# Begin print loop
+	ADD  print_counter 1
+	ADD  current_cell  1 # Evaluate next cell
 
-SET 5 @0
+	JGT end_program @print_counter @max_number  # End program if print_counter > max_number
 
-	ADD 8 1       # add 1 to output counter
-	ADD 4 1       # Evaluate next cell
-	COPY 7 @4     # De-reference pointer-to-current-cell, to check it's content
-	JNZ @5 @7     # Restart loop if current-cell is nonzero (it had been marked)
-	              # Note that this only works because uninitialized memory is always zero
-	WRITEI @8     # Output number in register 7 - it's a prime number.
-	WRITEC 10     # Newline
+	COPY temp_helper @current_cell  # De-reference pointer-to-current-cell, to check it's content
+	JNZ  print_loop  @temp_helper   # Restart loop if current-cell is nonzero (it had been marked)
+	                                # Note that this only works because uninitialized memory is always zero
 
-	JGT @5 @2 @8  # Restart loop if number-range (@2) > our counter (@7)
+	WRITEI @print_counter   # Output current number - it's prime.
+	WRITEC 10               # Newline
 
-# End program
+	JNZ print_loop 1  # Continue printing...
 
+end_program:
 END
+
+# Dummy to tell the program where it can start messing with memory
+data_start:
